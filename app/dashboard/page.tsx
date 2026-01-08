@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/actions/auth";
+import { createDocument } from "@/app/actions/documents";
+import Header from "@/components/ui/Header";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -13,74 +15,85 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // Fetch recent documents
+  const { data: documents } = await supabase
+    .from("documents")
+    .select("id, title, updated_at")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false })
+    .limit(5);
+
   return (
     <main className="min-h-screen bg-background">
-      {/* Simple Header with Logout */}
-      <header className="border-b border-border bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-text">Storyhenge</h1>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-text/70 hover:text-text transition-colors font-sans"
-            >
-              登出
-            </button>
-          </form>
-        </div>
-      </header>
+      <Header />
 
       {/* Dashboard Content */}
       <div className="max-w-6xl mx-auto px-4 py-16">
-        <div className="text-center">
-          <h2 className="text-4xl font-bold text-text mb-4">
-            歡迎來到 Storyhenge
+        <div className="mb-12">
+          <h2 className="text-4xl font-bold text-text mb-2">
+            歡迎回來，{user.email?.split("@")[0]}
           </h2>
-          <p className="text-xl text-text/70 font-sans mb-8">
-            登入成功！你的電子郵件：{user.email}
+          <p className="text-xl text-text/70 font-sans">
+            繼續你的創作之旅
           </p>
+        </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-border max-w-2xl mx-auto">
-            <div className="text-left space-y-4">
-              <h3 className="text-2xl font-bold text-text mb-4">
-                🎉 Week 1 完成！
-              </h3>
-              <div className="space-y-2 font-sans text-text/80">
-                <p className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  Landing page 設計完成（極簡風格）
-                </p>
-                <p className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  Next.js 14 專案初始化
-                </p>
-                <p className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  TypeScript + Tailwind CSS 設定完成
-                </p>
-                <p className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  Supabase 專案建立與整合
-                </p>
-                <p className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  Auth 系統（登入、註冊、登出）
-                </p>
-                <p className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  隱私政策與服務條款頁面
-                </p>
-              </div>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          {/* Create New Document */}
+          <form action={createDocument}>
+            <button
+              type="submit"
+              className="w-full bg-primary text-white rounded-xl p-8 hover:bg-primary/90 transition-colors text-left group"
+            >
+              <div className="text-4xl mb-4">✍️</div>
+              <h3 className="text-2xl font-bold mb-2">建立新文件</h3>
+              <p className="text-white/80 font-sans">
+                開始一段新的寫作旅程
+              </p>
+            </button>
+          </form>
 
-              <div className="mt-8 pt-6 border-t border-border">
-                <h4 className="font-bold text-text mb-2">下一步：Week 2</h4>
-                <p className="text-sm text-text/70 font-sans">
-                  建立寫作編輯器、文件管理、章節組織等功能
-                </p>
-              </div>
+          {/* View All Documents */}
+          <Link
+            href="/documents"
+            className="w-full bg-white border-2 border-border rounded-xl p-8 hover:shadow-lg transition-all text-left group"
+          >
+            <div className="text-4xl mb-4">📚</div>
+            <h3 className="text-2xl font-bold text-text mb-2">所有文件</h3>
+            <p className="text-text/70 font-sans">
+              瀏覽和管理你的所有作品
+            </p>
+          </Link>
+        </div>
+
+        {/* Recent Documents */}
+        {documents && documents.length > 0 && (
+          <div>
+            <h3 className="text-2xl font-bold text-text mb-6">最近編輯</h3>
+            <div className="grid gap-4">
+              {documents.map((doc) => (
+                <Link
+                  key={doc.id}
+                  href={`/documents/${doc.id}`}
+                  className="bg-white rounded-lg border border-border p-6 hover:shadow-md transition-shadow"
+                >
+                  <h4 className="text-xl font-bold text-text mb-2">
+                    {doc.title}
+                  </h4>
+                  <p className="text-sm text-text/60 font-sans">
+                    最後編輯{" "}
+                    {new Date(doc.updated_at).toLocaleDateString("zh-TW", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </Link>
+              ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
     </main>
   );

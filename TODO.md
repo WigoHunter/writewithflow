@@ -27,20 +27,21 @@
 ## Week 2: Writing Editor
 
 ### Database
-- [ ] Create `documents` table
-- [ ] Create `chapters` table
-- [ ] Setup RLS policies
-- [ ] Run migrations
+- [x] Create `documents` table
+- [x] Create `chapters` table
+- [x] Setup RLS policies
+- [x] Run migrations
 
 ### Editor Core
-- [ ] Install & configure Tiptap
+- [x] Install & configure Tiptap
+- [ ] /documents/[id] page for the editor UI
 - [ ] Basic rich text editing (bold, italic, headings)
 - [ ] Word count display
 - [ ] Auto-save (debounced)
 
 ### Document Management
-- [ ] Create new document
-- [ ] Document list page
+- [x] Create new document
+- [x] Document list page
 - [ ] Open/edit existing document
 - [ ] Delete document
 - [ ] Rename document
