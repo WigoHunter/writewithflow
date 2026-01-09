@@ -34,17 +34,17 @@
 
 ### Editor Core
 - [x] Install & configure Tiptap
-- [ ] /documents/[id] page for the editor UI
-- [ ] Basic rich text editing (bold, italic, headings)
-- [ ] Word count display
-- [ ] Auto-save (debounced)
+- [x] /documents/[id] page for the editor UI
+- [x] Basic rich text editing (bold, italic, headings)
+- [x] Word count display
+- [x] Auto-save (debounced)
 
 ### Document Management
 - [x] Create new document
 - [x] Document list page
-- [ ] Open/edit existing document
+- [x] Open/edit existing document
 - [ ] Delete document
-- [ ] Rename document
+- [x] Rename document
 
 ### Chapter Organization
 - [ ] Chapter sidebar
