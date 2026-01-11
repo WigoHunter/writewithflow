@@ -106,17 +106,47 @@ export default function ChapterSidebar({
                       onClick={() => {
                         // Scroll to chapter position
                         if (editor) {
+                          // First set the text selection
                           editor
                             .chain()
                             .focus()
-                            .setTextSelection(chapter.pos)
+                            .setTextSelection(chapter.pos + 1)
                             .run();
 
-                          // Scroll into view
-                          const element = editor.view.domAtPos(chapter.pos).node;
-                          if (element instanceof HTMLElement) {
-                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          }
+                          // Use setTimeout to ensure the selection is complete before scrolling
+                          setTimeout(() => {
+                            // Find the heading element by resolving the position
+                            const resolvedPos = editor.state.doc.resolve(chapter.pos);
+                            const node = resolvedPos.nodeAfter;
+
+                            if (node && node.type.name === 'heading') {
+                              // Get the DOM node for this ProseMirror node
+                              const domNode = editor.view.nodeDOM(chapter.pos);
+
+                              if (domNode instanceof HTMLElement) {
+                                // Find the scrollable container
+                                const scrollContainer = domNode.closest('.overflow-y-auto');
+
+                                if (scrollContainer) {
+                                  // Calculate where we need to scroll to
+                                  const containerRect = scrollContainer.getBoundingClientRect();
+                                  const elementRect = domNode.getBoundingClientRect();
+                                  const currentScrollTop = scrollContainer.scrollTop;
+
+                                  // Target: heading should be 32px from the top of the container
+                                  const targetScrollTop = currentScrollTop + (elementRect.top - containerRect.top) - 32;
+
+                                  scrollContainer.scrollTo({
+                                    top: Math.max(0, targetScrollTop),
+                                    behavior: 'smooth'
+                                  });
+                                } else {
+                                  // Fallback
+                                  domNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                              }
+                            }
+                          }, 50);
                         }
                       }}
                       className={`
