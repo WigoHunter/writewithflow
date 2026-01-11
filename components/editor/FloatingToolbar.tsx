@@ -10,6 +10,7 @@ interface FloatingToolbarProps {
 export default function FloatingToolbar({ editor }: FloatingToolbarProps) {
   // Force re-render when editor state changes
   const [, setUpdateTrigger] = useState(0);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -31,9 +32,24 @@ export default function FloatingToolbar({ editor }: FloatingToolbarProps) {
   const { from, to } = editor.state.selection;
   const hasSelection = from !== to;
 
+  // If minimized, show only a small expand button
+  if (isMinimized) {
+    return (
+      <div className="z-50 w-fit">
+        <button
+          onClick={() => setIsMinimized(false)}
+          className="bg-white rounded-lg shadow-lg border border-gray-200 p-2.5 hover:bg-gray-100 transition-all text-text/70"
+          title="展開工具列"
+        >
+          <ExpandIcon />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed left-8 top-1/2 -translate-y-1/2 z-50">
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 px-2 py-3 flex flex-col items-center gap-1">
+    <div className="z-50 w-fit">
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 px-2 py-3 flex flex-col items-center gap-1 min-w-[52px]">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={hasSelection && editor.isActive("bold")}
@@ -109,6 +125,16 @@ export default function FloatingToolbar({ editor }: FloatingToolbarProps) {
         >
           <QuoteIcon />
         </ToolbarButton>
+
+        <div className="h-px w-6 bg-gray-200 my-1" />
+
+        <button
+          onClick={() => setIsMinimized(true)}
+          className="p-2.5 rounded-md transition-all text-sm font-medium hover:bg-gray-100 hover:scale-105 text-text/70"
+          title="縮小工具列"
+        >
+          <CloseIcon />
+        </button>
       </div>
     </div>
   );
@@ -267,6 +293,44 @@ function QuoteIcon() {
     >
       <path
         d="M3 4v8M5 4h8M5 8h8M5 12h8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 4l8 8M12 4l-8 8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ExpandIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M2 8h12M8 2v12"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"

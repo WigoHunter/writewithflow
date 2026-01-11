@@ -138,30 +138,25 @@ export default function Editor({
   return (
     <div className="flex bg-background h-[calc(100vh-4rem)]">
       {/* Chapter Sidebar */}
-      <ChapterSidebar editor={editor} />
+      <ChapterSidebar
+        editor={editor}
+        title={title}
+        setTitle={setTitle}
+        wordCount={wordCount}
+        isSaving={isSaving}
+        lastSaved={lastSaved}
+      />
 
       {/* Main Editor Area */}
       <div className="flex-1 py-8 overflow-y-auto scroll-smooth h-full">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="mb-6">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-3xl font-bold text-text bg-transparent border-none focus:outline-none w-full mb-2"
-              placeholder="文件標題"
-            />
-            <div className="flex items-center gap-4 text-sm text-text/60 font-sans">
-              <span>{wordCount} 字</span>
-              {isSaving ? (
-                <span>儲存中...</span>
-              ) : lastSaved ? (
-                <span>已儲存</span>
-              ) : null}
+        <div className="max-w-4xl mx-auto px-4 relative">
+          {/* Floating Toolbar - positioned relative to document */}
+          <div className="absolute left-0 top-0 bottom-0 w-0">
+            <div className="sticky top-8 -translate-x-full pr-4">
+              <FloatingToolbar editor={editor} />
             </div>
           </div>
 
-          <FloatingToolbar editor={editor} />
           {/* A4 paper-like container */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 min-h-[1056px] px-24 py-24 transition-shadow hover:shadow-md">
             <EditorContent editor={editor} />

@@ -13,9 +13,21 @@ interface Chapter {
 
 interface ChapterSidebarProps {
   editor: Editor | null;
+  title: string;
+  setTitle: (title: string) => void;
+  wordCount: number;
+  isSaving: boolean;
+  lastSaved: Date | null;
 }
 
-export default function ChapterSidebar({ editor }: ChapterSidebarProps) {
+export default function ChapterSidebar({
+  editor,
+  title,
+  setTitle,
+  wordCount,
+  isSaving,
+  lastSaved
+}: ChapterSidebarProps) {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
 
@@ -56,44 +68,72 @@ export default function ChapterSidebar({ editor }: ChapterSidebarProps) {
     };
   }, [editor]);
 
-  if (!editor || chapters.length === 0) {
-    return (
-      <aside className="w-64 flex-shrink-0">
-        <div className="sticky top-0 h-[calc(100vh-4rem)] border-r border-gray-200 bg-gray-50 p-6 overflow-y-auto">
-          <h3 className="text-sm font-semibold text-gray-500 mb-4">章節導航</h3>
-          <p className="text-sm text-gray-400">
-            尚無章節標題。使用標題格式（H1、H2、H3）來建立章節。
-          </p>
-        </div>
-      </aside>
-    );
-  }
-
   return (
     <aside className="w-64 flex-shrink-0">
-      <div className="sticky top-0 h-[calc(100vh-4rem)] border-r border-gray-200 bg-gray-50 p-6 overflow-y-auto">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">章節導航</h3>
-        <nav>
-          <ul className="space-y-1">
-            {chapters.map((chapter) => (
-              <li key={chapter.id}>
-                <button
-                  onClick={() => {
-                    // TODO: Implement chapter navigation
-                  }}
-                  className={`
-                    w-full text-left px-3 py-2 rounded-md text-sm transition-colors
-                    ${activeChapterId === chapter.id ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-700 hover:bg-gray-200"}
-                    ${chapter.level === 2 ? "pl-6" : ""}
-                    ${chapter.level === 3 ? "pl-9" : ""}
-                  `}
-                >
-                  <span className="block truncate">{chapter.text}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      <div className="sticky top-0 h-[calc(100vh-4rem)] border-r border-gray-200 bg-gray-50 flex flex-col">
+        {/* Document Info - Sticky at top */}
+        <div className="p-6 border-b border-gray-200 bg-gray-50">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-lg font-bold text-text bg-transparent border-none focus:outline-none w-full mb-3 px-0"
+            placeholder="文件標題"
+          />
+          <div className="flex items-center gap-3 text-xs text-text/60 font-sans">
+            <span>{wordCount} 字</span>
+            {isSaving ? (
+              <span>儲存中...</span>
+            ) : lastSaved ? (
+              <span>已儲存</span>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Chapter Navigation - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">章節導航</h3>
+          {!editor || chapters.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              尚無章節標題。使用標題格式（H1、H2、H3）來建立章節。
+            </p>
+          ) : (
+            <nav>
+              <ul className="space-y-1">
+                {chapters.map((chapter) => (
+                  <li key={chapter.id}>
+                    <button
+                      onClick={() => {
+                        // Scroll to chapter position
+                        if (editor) {
+                          editor
+                            .chain()
+                            .focus()
+                            .setTextSelection(chapter.pos)
+                            .run();
+
+                          // Scroll into view
+                          const element = editor.view.domAtPos(chapter.pos).node;
+                          if (element instanceof HTMLElement) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }
+                      }}
+                      className={`
+                        w-full text-left px-3 py-2 rounded-md text-sm transition-colors
+                        ${activeChapterId === chapter.id ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-700 hover:bg-gray-200"}
+                        ${chapter.level === 2 ? "pl-6" : ""}
+                        ${chapter.level === 3 ? "pl-9" : ""}
+                      `}
+                    >
+                      <span className="block truncate">{chapter.text}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+        </div>
       </div>
     </aside>
   );
