@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useState, useRef } from "react";
 import FloatingToolbar from "./FloatingToolbar";
+import ChapterSidebar from "./ChapterSidebar";
 import { updateDocument } from "@/app/actions/documents";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
@@ -27,7 +28,13 @@ export default function Editor({
 
   const editor = useEditor({
     immediatelyRender: false,
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+      }),
+    ],
     content: initialContent,
     editorProps: {
       attributes: {
@@ -53,6 +60,7 @@ export default function Editor({
   useEffect(() => {
     if (editor && debouncedContent) {
       const currentContentString = JSON.stringify(debouncedContent);
+
       // Only save if content actually changed
       if (currentContentString !== lastSavedContentRef.current) {
         saveDocument(debouncedContent);
@@ -65,7 +73,12 @@ export default function Editor({
   const saveDocument = async (content: any) => {
     setIsSaving(true);
     try {
-      await updateDocument(documentId, { content });
+      // IMPORTANT: Serialize to JSON string first, then parse back
+      // This ensures all properties (including attrs) are preserved when passing to Server Actions
+      const contentStr = JSON.stringify(content);
+      const contentObj = JSON.parse(contentStr);
+
+      await updateDocument(documentId, { content: contentObj });
       setLastSaved(new Date());
     } catch (error) {
       console.error("Failed to save:", error);
@@ -123,10 +136,13 @@ export default function Editor({
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Document Title and Info */}
-      <div className="flex-1 py-8">
-        <div className="max-w-6xl mx-auto px-4">
+    <div className="flex bg-background h-[calc(100vh-4rem)]">
+      {/* Chapter Sidebar */}
+      <ChapterSidebar editor={editor} />
+
+      {/* Main Editor Area */}
+      <div className="flex-1 py-8 overflow-y-auto scroll-smooth h-full">
+        <div className="max-w-4xl mx-auto px-4">
           <div className="mb-6">
             <input
               type="text"

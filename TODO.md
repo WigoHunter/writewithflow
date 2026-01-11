@@ -47,9 +47,7 @@
 - [x] Rename document
 
 ### Chapter Organization
-- [ ] Chapter sidebar
-- [ ] Add/remove chapters
-- [ ] Reorder chapters
+- [x] Chapter sidebar
 - [ ] Navigate between chapters
 
 ---

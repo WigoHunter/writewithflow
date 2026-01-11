@@ -87,13 +87,6 @@ create table documents (
   updated_at timestamptz default now()
 );
 
-create table chapters (
-  id uuid primary key default gen_random_uuid(),
-  document_id uuid references documents(id) on delete cascade,
-  title text not null,
-  "order" int not null
-);
-
 create table revisions (
   id uuid primary key default gen_random_uuid(),
   document_id uuid references documents(id) on delete cascade,
@@ -130,7 +123,6 @@ create table daily_writing_stats (
 
 -- Enable RLS
 alter table documents enable row level security;
-alter table chapters enable row level security;
 alter table revisions enable row level security;
 alter table suggestions enable row level security;
 alter table daily_writing_stats enable row level security;
@@ -138,11 +130,6 @@ alter table daily_writing_stats enable row level security;
 -- RLS policies (user can only access their own data)
 create policy "Users can CRUD own documents" on documents
   for all using (auth.uid() = user_id);
-
-create policy "Users can CRUD own chapters" on chapters
-  for all using (
-    document_id in (select id from documents where user_id = auth.uid())
-  );
 
 create policy "Users can CRUD own revisions" on revisions
   for all using (
