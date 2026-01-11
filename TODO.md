@@ -48,7 +48,7 @@
 
 ### Chapter Organization
 - [x] Chapter sidebar
-- [ ] Navigate between chapters
+- [x] Navigate between chapters
 
 ---
 
