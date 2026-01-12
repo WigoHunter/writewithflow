@@ -55,28 +55,23 @@
 ## Week 3: Dashboard & Writing Stats
 
 ### Database
-- [ ] Create `daily_writing_stats` table
-- [ ] Create `upsert_daily_writing_stats` function
-- [ ] Setup RLS policies
+- [x] Create `daily_writing_stats` table
+- [x] Create `upsert_daily_writing_stats` function
+- [x] Setup RLS policies
 
 ### Word Count Tracking
-- [ ] `countWords()` utility (Chinese + English)
-- [ ] `calculateWordDiff()` utility
-- [ ] `trackWritingStats()` on auto-save
-- [ ] Test word count accuracy
+- [x] `countWords()` utility (Chinese + English)
 
 ### Dashboard
-- [ ] Dashboard page layout
-- [ ] Recent documents list
-- [ ] Quick actions (new doc, continue last doc)
-- [ ] Today's word count summary
-- [ ] Current streak display
+- [x] Dashboard page layout
+- [x] Recent documents list
+- [x] Quick actions (new doc, continue last doc)
+- [x] Today's word count summary
+- [x] Current streak display
 
 ### Writing Stats
-- [ ] Writing heatmap (react-activity-calendar)
-- [ ] Cumulative word count chart (Recharts)
-- [ ] Milestone cards (1萬、5萬、10萬字)
-- [ ] Date range selector
+- [x] Writing heatmap (react-activity-calendar)
+- [x] Cumulative word count chart (Recharts)
 
 ---
 
