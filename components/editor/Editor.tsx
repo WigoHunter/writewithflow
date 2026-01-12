@@ -105,20 +105,20 @@ export default function Editor({
     }
   };
 
-  // Count words (supports Chinese and English)
   const countWords = (text: string): number => {
     if (!text || text.trim().length === 0) return 0;
 
-    // Count Chinese characters
-    const chineseChars = text.match(/[\u4e00-\u9fa5]/g) || [];
-    const chineseCount = chineseChars.length;
+    // Count all CJK characters and punctuation
+    const cjkChars = text.match(/[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\uff00-\uffef]/g) || [];
+    const cjkCount = cjkChars.length;
 
-    // Count English words
-    const textWithoutChinese = text.replace(/[\u4e00-\u9fa5]/g, " ");
-    const englishWords = textWithoutChinese.match(/\b[a-zA-Z]+\b/g) || [];
+    const englishWords = text.match(/\b[a-zA-Z]+\b/g) || [];
     const englishCount = englishWords.length;
 
-    return chineseCount + englishCount;
+    const numbers = text.match(/\b\d+\b/g) || [];
+    const numberCount = numbers.length;
+
+    return cjkCount + englishCount + numberCount;
   };
 
   // Calculate initial word count and set initial content ref
