@@ -31,7 +31,7 @@ export default async function DocumentsPage() {
       <Header />
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-text">我的文件</h1>
           <form action={createDocument}>

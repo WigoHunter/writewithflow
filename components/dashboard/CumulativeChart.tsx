@@ -24,31 +24,47 @@ export default function CumulativeChart({ data }: CumulativeChartProps) {
     當日字數: item.daily,
   }));
 
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white rounded-lg border border-border p-4">
+        <h4 className="text-base font-semibold text-text mb-3">累計趨勢</h4>
+        <p className="text-xs text-text/50 font-sans">還沒有寫作記錄</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-xl border-2 border-border p-8">
-      <h3 className="text-xl font-bold text-text mb-6">累計字數</h3>
-      <ResponsiveContainer width="100%" height={300}>
+    <div className="bg-white rounded-lg border border-border p-4">
+      <h4 className="text-base font-semibold text-text mb-4">累計趨勢</h4>
+      <ResponsiveContainer width="100%" height={160}>
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis
             dataKey="date"
-            stroke="#666"
-            fontSize={12}
+            stroke="#999"
+            fontSize={10}
             tickLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
-            stroke="#666"
-            fontSize={12}
+            stroke="#999"
+            fontSize={10}
             tickLine={false}
-            tickFormatter={(value) => value.toLocaleString()}
+            width={40}
+            tickFormatter={(value) => {
+              if (value >= 1000) {
+                return `${(value / 1000).toFixed(0)}k`;
+              }
+              return value.toString();
+            }}
           />
           <Tooltip
             contentStyle={{
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '14px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              padding: '6px 8px',
             }}
             formatter={(value: any) => [value.toLocaleString() + ' 字', '']}
             labelFormatter={(label: any, payload: any) => {
@@ -64,13 +80,10 @@ export default function CumulativeChart({ data }: CumulativeChartProps) {
             stroke="#7c3aed"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4 }}
+            activeDot={{ r: 3 }}
           />
         </LineChart>
       </ResponsiveContainer>
-      <div className="mt-4 text-sm text-text/60 font-sans">
-        顯示過去寫作的累計字數趨勢
-      </div>
     </div>
   );
 }

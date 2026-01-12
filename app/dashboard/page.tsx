@@ -73,114 +73,114 @@ export default async function DashboardPage() {
       <Header />
 
       {/* Dashboard Content */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
-        <div className="mb-12">
-          <h2 className="text-4xl font-bold text-text mb-2">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-text mb-1">
             歡迎回來，{user.email?.split("@")[0]}
           </h2>
-          <p className="text-xl text-text/70 font-sans">
+          <p className="text-base text-text/60 font-sans">
             繼續你的創作之旅
           </p>
         </div>
 
-        {/* Writing Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {/* Today's Words */}
-          <div className="bg-white rounded-xl border-2 border-border p-8">
-            <div className="text-sm font-sans text-text/60 mb-2">今日字數</div>
-            <div className="text-5xl font-bold text-primary mb-2">
-              {todayWordChange >= 0 ? '+' : ''}{todayWordChange.toLocaleString()}
-            </div>
-            <p className="text-text/70 font-sans">字</p>
-          </div>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Current Streak */}
-          <div className="bg-white rounded-xl border-2 border-border p-8">
-            <div className="text-sm font-sans text-text/60 mb-2">連續寫作</div>
-            <div className="text-5xl font-bold text-primary mb-2">
-              {currentStreak}
-            </div>
-            <p className="text-text/70 font-sans">天</p>
-          </div>
-        </div>
-
-        {/* Writing Heatmap */}
-        <div className="mb-12">
-          <WritingHeatmap data={heatmapData} />
-        </div>
-
-        {/* Cumulative Chart */}
-        <div className="mb-12">
-          <CumulativeChart data={chartData} />
-        </div>
-
-        {/* Recent Documents */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-text">最近編輯</h3>
-            <form action={createDocument}>
-              <button
-                type="submit"
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <span className="font-sans">新文件</span>
-              </button>
-            </form>
-          </div>
-
-          {documents && documents.length > 0 ? (
-            <div className="grid gap-4">
-              {documents.map((doc) => (
-                <Link
-                  key={doc.id}
-                  href={`/documents/${doc.id}`}
-                  className="bg-white rounded-lg border border-border p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-xl font-bold text-text">
-                      {doc.title}
-                    </h4>
-                    <span className="text-sm text-text/60 font-sans">
-                      {doc.word_count?.toLocaleString() || 0} 字
-                    </span>
-                  </div>
-                  <p className="text-sm text-text/60 font-sans">
-                    最後編輯{" "}
-                    {new Date(doc.updated_at).toLocaleDateString("zh-TW", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg border-2 border-dashed border-border p-12 text-center">
-              <p className="text-text/60 font-sans mb-4">還沒有文件</p>
+          {/* Left: Recent Documents (Main Area - 2/3 width) */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-text">最近編輯</h3>
               <form action={createDocument}>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-sans"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                 >
-                  建立第一個文件
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  <span className="font-sans">新文件</span>
                 </button>
               </form>
             </div>
-          )}
+
+            {documents && documents.length > 0 ? (
+              <div className="grid gap-3">
+                {documents.map((doc) => (
+                  <Link
+                    key={doc.id}
+                    href={`/documents/${doc.id}`}
+                    className="bg-white rounded-lg border border-border p-5 hover:border-primary/30 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <h4 className="text-lg font-semibold text-text">
+                        {doc.title}
+                      </h4>
+                      <span className="text-sm text-text/50 font-sans tabular-nums">
+                        {doc.word_count?.toLocaleString() || 0} 字
+                      </span>
+                    </div>
+                    <p className="text-sm text-text/50 font-sans">
+                      最後編輯 {new Date(doc.updated_at).toLocaleDateString("zh-TW", {
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg border-2 border-dashed border-border p-12 text-center">
+                <p className="text-text/60 font-sans mb-4">還沒有文件</p>
+                <form action={createDocument}>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-sans"
+                  >
+                    建立第一個文件
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Stats Sidebar (1/3 width) */}
+          <div className="space-y-4">
+
+            {/* Today's Stats */}
+            <div className="bg-white rounded-lg border border-border p-4">
+              <h4 className="text-base font-semibold text-text mb-4">今日寫作</h4>
+              <div className="space-y-3">
+                <div>
+                  <div className="text-xs text-text/50 font-sans mb-1">字數</div>
+                  <div className="text-3xl font-bold text-primary tabular-nums">
+                    {todayWordChange >= 0 ? '+' : ''}{todayWordChange.toLocaleString()}
+                  </div>
+                </div>
+                <div className="border-t border-border pt-3">
+                  <div className="text-xs text-text/50 font-sans mb-1">連續寫作</div>
+                  <div className="text-2xl font-bold text-text tabular-nums">
+                    {currentStreak} <span className="text-sm text-text/50 font-normal">天</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Heatmap */}
+            <WritingHeatmap data={heatmapData} />
+
+            {/* Chart */}
+            <CumulativeChart data={chartData} />
+          </div>
         </div>
       </div>
     </main>

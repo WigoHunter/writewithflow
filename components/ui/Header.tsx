@@ -4,7 +4,7 @@ import { logout } from "@/app/actions/auth";
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-white shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/dashboard">
           <h1 className="text-2xl font-bold text-text">Storyhenge</h1>
         </Link>
