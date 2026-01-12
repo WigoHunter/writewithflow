@@ -45,7 +45,7 @@ export async function createDocument() {
 
 export async function updateDocument(
   documentId: string,
-  updates: { title?: string; content?: any }
+  updates: { title?: string; content?: any; word_count?: number }
 ) {
   const supabase = await createClient();
 

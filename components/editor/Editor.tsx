@@ -7,6 +7,8 @@ import FloatingToolbar from "./FloatingToolbar";
 import ChapterSidebar from "./ChapterSidebar";
 import { updateDocument } from "@/app/actions/documents";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { countWords, getTodayDate } from "@/lib/word-count";
+import { trackWritingStats } from "@/app/actions/writing-stats";
 
 interface EditorProps {
   documentId: string;
@@ -78,7 +80,20 @@ export default function Editor({
       const contentStr = JSON.stringify(content);
       const contentObj = JSON.parse(contentStr);
 
-      await updateDocument(documentId, { content: contentObj });
+      // Calculate word count
+      const text = editor?.getText() || '';
+      const newWordCount = countWords(text);
+
+      // Update document with content and word count
+      await updateDocument(documentId, {
+        content: contentObj,
+        word_count: newWordCount
+      });
+
+      // Track writing stats
+      const today = getTodayDate();
+      await trackWritingStats(documentId, today, newWordCount);
+
       setLastSaved(new Date());
     } catch (error) {
       console.error("Failed to save:", error);
@@ -105,21 +120,6 @@ export default function Editor({
     }
   };
 
-  const countWords = (text: string): number => {
-    if (!text || text.trim().length === 0) return 0;
-
-    // Count all CJK characters and punctuation
-    const cjkChars = text.match(/[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\uff00-\uffef]/g) || [];
-    const cjkCount = cjkChars.length;
-
-    const englishWords = text.match(/\b[a-zA-Z]+\b/g) || [];
-    const englishCount = englishWords.length;
-
-    const numbers = text.match(/\b\d+\b/g) || [];
-    const numberCount = numbers.length;
-
-    return cjkCount + englishCount + numberCount;
-  };
 
   // Calculate initial word count and set initial content ref
   useEffect(() => {

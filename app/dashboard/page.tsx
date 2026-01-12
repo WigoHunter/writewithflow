@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createDocument } from "@/app/actions/documents";
 import Header from "@/components/ui/Header";
+import { getTodayWordChange, getStatsDateRange } from "@/app/actions/writing-stats";
+import { calculateCurrentStreak } from "@/lib/streak";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -18,10 +20,30 @@ export default async function DashboardPage() {
   // Fetch recent documents
   const { data: documents } = await supabase
     .from("documents")
-    .select("id, title, updated_at")
+    .select("id, title, updated_at, word_count")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false })
     .limit(5);
+
+  // Get today's date (using server's timezone, but this runs on client's browser in practice)
+  const today = (() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
+
+  // Get today's word change (today - yesterday)
+  const todayWordChange = await getTodayWordChange(today);
+
+  // Get stats for streak calculation (last 365 days)
+  const oneYearAgo = new Date();
+  oneYearAgo.setDate(oneYearAgo.getDate() - 365);
+  const startDate = oneYearAgo.toISOString().split('T')[0];
+
+  const yearStats = await getStatsDateRange(startDate, today);
+  const currentStreak = calculateCurrentStreak(yearStats);
 
   return (
     <main className="min-h-screen bg-background">
@@ -36,6 +58,27 @@ export default async function DashboardPage() {
           <p className="text-xl text-text/70 font-sans">
             繼續你的創作之旅
           </p>
+        </div>
+
+        {/* Writing Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          {/* Today's Words */}
+          <div className="bg-white rounded-xl border-2 border-border p-8">
+            <div className="text-sm font-sans text-text/60 mb-2">今日字數</div>
+            <div className="text-5xl font-bold text-primary mb-2">
+              {todayWordChange >= 0 ? '+' : ''}{todayWordChange.toLocaleString()}
+            </div>
+            <p className="text-text/70 font-sans">字</p>
+          </div>
+
+          {/* Current Streak */}
+          <div className="bg-white rounded-xl border-2 border-border p-8">
+            <div className="text-sm font-sans text-text/60 mb-2">連續寫作</div>
+            <div className="text-5xl font-bold text-primary mb-2">
+              {currentStreak}
+            </div>
+            <p className="text-text/70 font-sans">天</p>
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -78,9 +121,14 @@ export default async function DashboardPage() {
                   href={`/documents/${doc.id}`}
                   className="bg-white rounded-lg border border-border p-6 hover:shadow-md transition-shadow"
                 >
-                  <h4 className="text-xl font-bold text-text mb-2">
-                    {doc.title}
-                  </h4>
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-xl font-bold text-text">
+                      {doc.title}
+                    </h4>
+                    <span className="text-sm text-text/60 font-sans">
+                      {doc.word_count?.toLocaleString() || 0} 字
+                    </span>
+                  </div>
                   <p className="text-sm text-text/60 font-sans">
                     最後編輯{" "}
                     {new Date(doc.updated_at).toLocaleDateString("zh-TW", {
