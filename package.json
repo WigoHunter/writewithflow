@@ -17,7 +17,10 @@
     "@tiptap/starter-kit": "^3.15.3",
     "next": "^15.1.4",
     "react": "^19.0.0",
+    "react-activity-calendar": "^3.0.5",
     "react-dom": "^19.0.0",
+    "react-tooltip": "^5.30.0",
+    "recharts": "^3.6.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

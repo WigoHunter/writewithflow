@@ -5,6 +5,9 @@ import { createDocument } from "@/app/actions/documents";
 import Header from "@/components/ui/Header";
 import { getTodayWordChange, getStatsDateRange } from "@/app/actions/writing-stats";
 import { calculateCurrentStreak } from "@/lib/streak";
+import { transformToHeatmapData, transformToCumulativeData } from "@/lib/stats-transform";
+import WritingHeatmap from "@/components/dashboard/WritingHeatmap";
+import CumulativeChart from "@/components/dashboard/CumulativeChart";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -37,13 +40,33 @@ export default async function DashboardPage() {
   // Get today's word change (today - yesterday)
   const todayWordChange = await getTodayWordChange(today);
 
-  // Get stats for streak calculation (last 365 days)
+  // Get stats for past 6 months for heatmap and charts (using local timezone)
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 180);
+  const startDate = (() => {
+    const year = sixMonthsAgo.getFullYear();
+    const month = String(sixMonthsAgo.getMonth() + 1).padStart(2, '0');
+    const day = String(sixMonthsAgo.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
+
+  const stats = await getStatsDateRange(startDate, today);
+
+  // Transform data for charts (heatmap will auto-fill missing dates)
+  const heatmapData = transformToHeatmapData(stats);
+  const chartData = transformToCumulativeData(stats);
+
+  // Calculate streak (needs more historical data, using local timezone)
   const oneYearAgo = new Date();
   oneYearAgo.setDate(oneYearAgo.getDate() - 365);
-  const startDate = oneYearAgo.toISOString().split('T')[0];
-
-  const yearStats = await getStatsDateRange(startDate, today);
-  const currentStreak = calculateCurrentStreak(yearStats);
+  const streakStartDate = (() => {
+    const year = oneYearAgo.getFullYear();
+    const month = String(oneYearAgo.getMonth() + 1).padStart(2, '0');
+    const day = String(oneYearAgo.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
+  const streakStats = await getStatsDateRange(streakStartDate, today);
+  const currentStreak = calculateCurrentStreak(streakStats);
 
   return (
     <main className="min-h-screen bg-background">
@@ -81,39 +104,44 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {/* Create New Document */}
-          <form action={createDocument}>
-            <button
-              type="submit"
-              className="w-full bg-primary text-white rounded-xl p-8 hover:bg-primary/90 transition-colors text-left group"
-            >
-              <div className="text-4xl mb-4">✍️</div>
-              <h3 className="text-2xl font-bold mb-2">建立新文件</h3>
-              <p className="text-white/80 font-sans">
-                開始一段新的寫作旅程
-              </p>
-            </button>
-          </form>
+        {/* Writing Heatmap */}
+        <div className="mb-12">
+          <WritingHeatmap data={heatmapData} />
+        </div>
 
-          {/* View All Documents */}
-          <Link
-            href="/documents"
-            className="w-full bg-white border-2 border-border rounded-xl p-8 hover:shadow-lg transition-all text-left group"
-          >
-            <div className="text-4xl mb-4">📚</div>
-            <h3 className="text-2xl font-bold text-text mb-2">所有文件</h3>
-            <p className="text-text/70 font-sans">
-              瀏覽和管理你的所有作品
-            </p>
-          </Link>
+        {/* Cumulative Chart */}
+        <div className="mb-12">
+          <CumulativeChart data={chartData} />
         </div>
 
         {/* Recent Documents */}
-        {documents && documents.length > 0 && (
-          <div>
-            <h3 className="text-2xl font-bold text-text mb-6">最近編輯</h3>
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-text">最近編輯</h3>
+            <form action={createDocument}>
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                <span className="font-sans">新文件</span>
+              </button>
+            </form>
+          </div>
+
+          {documents && documents.length > 0 ? (
             <div className="grid gap-4">
               {documents.map((doc) => (
                 <Link
@@ -140,8 +168,20 @@ export default async function DashboardPage() {
                 </Link>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="bg-white rounded-lg border-2 border-dashed border-border p-12 text-center">
+              <p className="text-text/60 font-sans mb-4">還沒有文件</p>
+              <form action={createDocument}>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-sans"
+                >
+                  建立第一個文件
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
