@@ -60,6 +60,7 @@ export async function getTodayTotalWords(date: string) {
 
 /**
  * 取得今天相對於昨天的字數變化（today - yesterday）
+ * 如果今天還沒有記錄，回傳 0 而非負數
  */
 export async function getTodayWordChange(today: string) {
   const supabase = await createClient();
@@ -69,17 +70,22 @@ export async function getTodayWordChange(today: string) {
     throw new Error('Not authenticated');
   }
 
+  // 取得今天的總字數
+  const todayTotal = await getTodayTotalWords(today);
+
+  // 如果今天沒有記錄，回傳 0
+  if (todayTotal === 0) {
+    return 0;
+  }
+
   // 計算昨天的日期
   const todayDate = new Date(today);
   const yesterdayDate = new Date(todayDate);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterday = yesterdayDate.toISOString().split('T')[0];
 
-  // 取得今天和昨天的總字數
-  const [todayTotal, yesterdayTotal] = await Promise.all([
-    getTodayTotalWords(today),
-    getTodayTotalWords(yesterday),
-  ]);
+  // 取得昨天的總字數
+  const yesterdayTotal = await getTodayTotalWords(yesterday);
 
   return todayTotal - yesterdayTotal;
 }
