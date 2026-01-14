@@ -78,11 +78,11 @@ export async function getTodayWordChange(today: string) {
     return 0;
   }
 
-  // 計算昨天的日期
-  const todayDate = new Date(today);
-  const yesterdayDate = new Date(todayDate);
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterday = yesterdayDate.toISOString().split('T')[0];
+  // 計算昨天的日期（使用本地日期解析，避免時區問題）
+  const [year, month, day] = today.split('-').map(Number);
+  const todayDate = new Date(year, month - 1, day);
+  todayDate.setDate(todayDate.getDate() - 1);
+  const yesterday = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
 
   // 取得昨天的總字數
   const yesterdayTotal = await getTodayTotalWords(yesterday);

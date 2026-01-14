@@ -66,7 +66,7 @@ export default async function DashboardPage() {
     return `${year}-${month}-${day}`;
   })();
   const streakStats = await getStatsDateRange(streakStartDate, today);
-  const currentStreak = calculateCurrentStreak(streakStats);
+  const currentStreak = calculateCurrentStreak(streakStats, today);
 
   return (
     <main className="min-h-screen bg-background">
