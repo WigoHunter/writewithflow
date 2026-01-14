@@ -40,17 +40,12 @@ export default async function DashboardPage() {
   // Get today's word change (today - yesterday)
   const todayWordChange = await getTodayWordChange(today);
 
-  // Get stats for past 6 months for heatmap and charts (using local timezone)
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 180);
-  const startDate = (() => {
-    const year = sixMonthsAgo.getFullYear();
-    const month = String(sixMonthsAgo.getMonth() + 1).padStart(2, '0');
-    const day = String(sixMonthsAgo.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  })();
+  // Get stats for heatmap and charts (current year + last 6 months of previous year)
+  const currentYear = new Date().getFullYear();
+  const heatmapStartDate = `${currentYear - 1}-07-01`; // Include last 6 months of previous year
+  const endOfYear = `${currentYear}-12-31`;
 
-  const stats = await getStatsDateRange(startDate, today);
+  const stats = await getStatsDateRange(heatmapStartDate, endOfYear);
 
   // Transform data for charts (heatmap will auto-fill missing dates)
   const heatmapData = transformToHeatmapData(stats);

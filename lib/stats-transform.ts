@@ -14,7 +14,7 @@ export type CumulativeChartData = Array<{
 
 /**
  * 將 per-document 資料轉換成 Heatmap 格式
- * 固定顯示過去 6 個月（180 天），填充缺失的日期
+ * 顯示從去年 7/1 到今年 12/31 的日期，填充缺失的日期
  */
 export function transformToHeatmapData(stats: DailyStats[]): HeatmapData {
   // 1. 先聚合成 per-day 總字數
@@ -25,15 +25,16 @@ export function transformToHeatmapData(stats: DailyStats[]): HeatmapData {
     dailyTotals.set(stat.date, current + stat.word_count);
   });
 
-  // 2. 生成過去 6 個月（180 天）的完整日期範圍（使用本地時區）
+  // 2. 生成日期範圍（去年 7/1 到今年 12/31）
   const today = new Date();
-  const sixMonthsAgo = new Date(today);
-  sixMonthsAgo.setDate(today.getDate() - 180);
+  const currentYear = today.getFullYear();
+  const rangeStart = new Date(currentYear - 1, 6, 1); // 去年 7月1日
+  const rangeEnd = new Date(currentYear, 11, 31); // 今年 12月31日
 
   const allDates: Array<{ date: string; total_words: number }> = [];
-  const currentDate = new Date(sixMonthsAgo);
+  const currentDate = new Date(rangeStart);
 
-  while (currentDate <= today) {
+  while (currentDate <= rangeEnd) {
     // 使用本地時區格式化日期
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
