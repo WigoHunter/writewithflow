@@ -59,7 +59,7 @@ export async function getTodayTotalWords(date: string) {
 }
 
 /**
- * 取得今天相對於昨天的字數變化（today - yesterday）
+ * 取得今天相對於前一次有記錄日期的字數變化
  * 如果今天還沒有記錄，回傳 0 而非負數
  */
 export async function getTodayWordChange(today: string) {
@@ -78,16 +78,49 @@ export async function getTodayWordChange(today: string) {
     return 0;
   }
 
-  // 計算昨天的日期（使用本地日期解析，避免時區問題）
-  const [year, month, day] = today.split('-').map(Number);
-  const todayDate = new Date(year, month - 1, day);
-  todayDate.setDate(todayDate.getDate() - 1);
-  const yesterday = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+  // 找到今天之前最近一次有記錄的日期
+  const previousTotal = await getPreviousDayTotal(today);
 
-  // 取得昨天的總字數
-  const yesterdayTotal = await getTodayTotalWords(yesterday);
+  return todayTotal - previousTotal;
+}
 
-  return todayTotal - yesterdayTotal;
+/**
+ * 取得指定日期之前最近一次有記錄的總字數
+ * 如果沒有之前的記錄，回傳 0
+ */
+async function getPreviousDayTotal(beforeDate: string): Promise<number> {
+  const supabase = await createClient();
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error('Not authenticated');
+  }
+
+  // 查詢 beforeDate 之前最近一天的所有文件記錄
+  const { data, error } = await supabase
+    .from('daily_writing_stats')
+    .select('date, word_count')
+    .eq('user_id', user.id)
+    .lt('date', beforeDate)
+    .order('date', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    return 0;
+  }
+
+  // 找到最近的日期
+  const latestDate = data[0].date;
+
+  // 加總該日期所有文件的字數
+  const total = data
+    .filter(stat => stat.date === latestDate)
+    .reduce((sum, stat) => sum + stat.word_count, 0);
+
+  return total;
 }
 
 /**

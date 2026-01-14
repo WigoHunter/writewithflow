@@ -33,6 +33,7 @@ export function transformToHeatmapData(stats: DailyStats[]): HeatmapData {
 
   const allDates: Array<{ date: string; total_words: number }> = [];
   const currentDate = new Date(rangeStart);
+  let lastKnownTotal = 0; // 追蹤最近一次有記錄的總字數
 
   while (currentDate <= rangeEnd) {
     // 使用本地時區格式化日期
@@ -41,9 +42,15 @@ export function transformToHeatmapData(stats: DailyStats[]): HeatmapData {
     const day = String(currentDate.getDate()).padStart(2, '0');
     const dateStr = `${year}-${month}-${day}`;
 
+    // 如果有記錄，使用記錄的值；否則繼承前一次的總字數
+    const todayTotal = dailyTotals.get(dateStr);
+    if (todayTotal !== undefined) {
+      lastKnownTotal = todayTotal;
+    }
+
     allDates.push({
       date: dateStr,
-      total_words: dailyTotals.get(dateStr) || 0,
+      total_words: lastKnownTotal,
     });
     currentDate.setDate(currentDate.getDate() + 1);
   }
