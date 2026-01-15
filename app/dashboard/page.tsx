@@ -3,11 +3,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createDocument } from "@/app/actions/documents";
 import Header from "@/components/ui/Header";
-import { getTodayWordChange, getStatsDateRange } from "@/app/actions/writing-stats";
-import { calculateCurrentStreak } from "@/lib/streak";
+import { getStatsDateRange } from "@/app/actions/writing-stats";
 import { transformToHeatmapData, transformToCumulativeData } from "@/lib/stats-transform";
 import WritingHeatmap from "@/components/dashboard/WritingHeatmap";
 import CumulativeChart from "@/components/dashboard/CumulativeChart";
+import TodayStats from "@/components/dashboard/TodayStats";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -28,18 +28,6 @@ export default async function DashboardPage() {
     .order("updated_at", { ascending: false })
     .limit(5);
 
-  // Get today's date (using server's timezone, but this runs on client's browser in practice)
-  const today = (() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  })();
-
-  // Get today's word change (today - yesterday)
-  const todayWordChange = await getTodayWordChange(today);
-
   // Get stats for heatmap and charts (current year + last 6 months of previous year)
   const currentYear = new Date().getFullYear();
   const heatmapStartDate = `${currentYear - 1}-07-01`; // Include last 6 months of previous year
@@ -50,18 +38,6 @@ export default async function DashboardPage() {
   // Transform data for charts (heatmap will auto-fill missing dates)
   const heatmapData = transformToHeatmapData(stats);
   const chartData = transformToCumulativeData(stats);
-
-  // Calculate streak (needs more historical data, using local timezone)
-  const oneYearAgo = new Date();
-  oneYearAgo.setDate(oneYearAgo.getDate() - 365);
-  const streakStartDate = (() => {
-    const year = oneYearAgo.getFullYear();
-    const month = String(oneYearAgo.getMonth() + 1).padStart(2, '0');
-    const day = String(oneYearAgo.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  })();
-  const streakStats = await getStatsDateRange(streakStartDate, today);
-  const currentStreak = calculateCurrentStreak(streakStats, today);
 
   return (
     <main className="min-h-screen bg-background">
@@ -151,24 +127,8 @@ export default async function DashboardPage() {
           {/* Right: Stats Sidebar (1/3 width) */}
           <div className="space-y-4">
 
-            {/* Today's Stats */}
-            <div className="bg-white rounded-lg border border-border p-4">
-              <h4 className="text-base font-semibold text-text mb-4">今日寫作</h4>
-              <div className="space-y-3">
-                <div>
-                  <div className="text-xs text-text/50 font-sans mb-1">字數</div>
-                  <div className="text-3xl font-bold text-primary tabular-nums">
-                    {todayWordChange >= 0 ? '+' : ''}{todayWordChange.toLocaleString()}
-                  </div>
-                </div>
-                <div className="border-t border-border pt-3">
-                  <div className="text-xs text-text/50 font-sans mb-1">連續寫作</div>
-                  <div className="text-2xl font-bold text-text tabular-nums">
-                    {currentStreak} <span className="text-sm text-text/50 font-normal">天</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Today's Stats - Client Component for correct timezone */}
+            <TodayStats />
 
             {/* Heatmap */}
             <WritingHeatmap data={heatmapData} />

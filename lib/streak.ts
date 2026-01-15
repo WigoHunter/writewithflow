@@ -56,7 +56,8 @@ export function calculateCurrentStreak(stats: DailyStats[], today: string): numb
   }
 
   // 4. 計算 streak
-  let streak = 0;
+  // 今天有寫作記錄，streak 至少為 1
+  let streak = 1;
 
   for (let i = 0; i < sortedDays.length - 1; i++) {
     const current = sortedDays[i];
@@ -70,11 +71,12 @@ export function calculateCurrentStreak(stats: DailyStats[], today: string): numb
       break;
     }
 
-    // 檢查是否有寫作（總字數增加）
+    // 檢查前一天是否有寫作（總字數增加代表有寫）
+    // 如果前一天有記錄，streak 繼續累加
     if (current.total_words > previous.total_words) {
       streak++;
     } else {
-      // 沒寫作，中斷
+      // 前一天沒有淨增加字數，中斷
       break;
     }
   }
