@@ -481,6 +481,9 @@ const SuggestionMark = Mark.create({
 - Offline mode
 - Export (ePub, PDF)
 - Branching/parallel versions
+- **Author profile & discovery platform**（like GitHub, but for writers）
+  - Writers choose to publish their works
+  - Readers can comment, give feedback
 
 ## Commands
 
