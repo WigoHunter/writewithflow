@@ -172,3 +172,25 @@ export async function getStatsDateRange(startDate: string, endDate: string) {
   if (error) throw error;
   return data || [];
 }
+
+/**
+ * 取得指定用戶在日期範圍內的所有統計（用於 public profile）
+ */
+export async function getStatsDateRangeByUserId(
+  userId: string,
+  startDate: string,
+  endDate: string
+) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('daily_writing_stats')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
