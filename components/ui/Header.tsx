@@ -16,10 +16,10 @@ export default function Header() {
             儀表板
           </Link>
           <Link
-            href="/documents"
+            href="/projects"
             className="px-4 py-2 text-sm font-medium text-text/70 hover:text-text transition-colors font-sans"
           >
-            我的文件
+            我的作品
           </Link>
           <form action={logout}>
             <button

@@ -13,7 +13,7 @@ export type CumulativeChartData = Array<{
 }>;
 
 /**
- * 將 per-document 資料轉換成 Heatmap 格式
+ * 將 per-project 資料轉換成 Heatmap 格式
  * 顯示從去年 7/1 到今年 12/31 的日期，填充缺失的日期
  */
 export function transformToHeatmapData(stats: DailyStats[]): HeatmapData {
@@ -78,7 +78,7 @@ function calculateLevel(dailyChange: number): 0 | 1 | 2 | 3 | 4 {
 }
 
 /**
- * 將 per-document 資料轉換成累計字數圖表格式
+ * 將 per-project 資料轉換成累計字數圖表格式
  */
 export function transformToCumulativeData(stats: DailyStats[]): CumulativeChartData {
   // 1. 聚合成 per-day 總字數

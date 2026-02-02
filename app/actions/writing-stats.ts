@@ -3,13 +3,12 @@
 import { createClient } from '@/lib/supabase/server';
 
 /**
- * 追蹤寫作統計
- * 記錄某個文件在某天的字數快照
+ * 追蹤 Project 寫作統計
+ * 自動計算 project 的總字數並記錄到 daily_writing_stats
  */
-export async function trackWritingStats(
-  documentId: string,
-  date: string,
-  wordCount: number
+export async function trackProjectWritingStats(
+  projectId: string,
+  date: string
 ) {
   const supabase = await createClient();
 
@@ -18,22 +17,33 @@ export async function trackWritingStats(
     throw new Error('Not authenticated');
   }
 
-  // Call database function
-  const { error } = await supabase.rpc('upsert_daily_writing_stats', {
+  // Get total project word count using the database function
+  const { data: totalWordCount, error: wordCountError } = await supabase.rpc(
+    'get_project_word_count',
+    { p_project_id: projectId }
+  );
+
+  if (wordCountError) {
+    console.error('Failed to get project word count:', wordCountError);
+    throw wordCountError;
+  }
+
+  // Call database function to upsert stats
+  const { error } = await supabase.rpc('upsert_project_writing_stats', {
     p_user_id: user.id,
-    p_document_id: documentId,
+    p_project_id: projectId,
     p_date: date,
-    p_word_count: wordCount,
+    p_word_count: totalWordCount || 0,
   });
 
   if (error) {
-    console.error('Failed to track writing stats:', error);
+    console.error('Failed to track project writing stats:', error);
     throw error;
   }
 }
 
 /**
- * 取得今天的總字數（所有文件）
+ * 取得今天的總字數（所有 projects）
  */
 export async function getTodayTotalWords(date: string) {
   const supabase = await createClient();
@@ -53,7 +63,7 @@ export async function getTodayTotalWords(date: string) {
     throw error;
   }
 
-  // Sum 所有文件的字數
+  // Sum 所有 projects 的字數
   const totalWords = data?.reduce((sum, stat) => sum + stat.word_count, 0) || 0;
   return totalWords;
 }
@@ -96,7 +106,7 @@ async function getPreviousDayTotal(beforeDate: string): Promise<number> {
     throw new Error('Not authenticated');
   }
 
-  // 查詢 beforeDate 之前最近一天的所有文件記錄
+  // 查詢 beforeDate 之前最近一天的所有 project 記錄
   const { data, error } = await supabase
     .from('daily_writing_stats')
     .select('date, word_count')
@@ -115,7 +125,7 @@ async function getPreviousDayTotal(beforeDate: string): Promise<number> {
   // 找到最近的日期
   const latestDate = data[0].date;
 
-  // 加總該日期所有文件的字數
+  // 加總該日期所有 projects 的字數
   const total = data
     .filter(stat => stat.date === latestDate)
     .reduce((sum, stat) => sum + stat.word_count, 0);
@@ -124,10 +134,10 @@ async function getPreviousDayTotal(beforeDate: string): Promise<number> {
 }
 
 /**
- * 取得某個文件的統計
+ * 取得某個 project 的統計
  */
-export async function getDocumentStats(
-  documentId: string,
+export async function getProjectStats(
+  projectId: string,
   startDate: string,
   endDate: string
 ) {
@@ -141,7 +151,7 @@ export async function getDocumentStats(
   const { data, error } = await supabase
     .from('daily_writing_stats')
     .select('*')
-    .eq('document_id', documentId)
+    .eq('project_id', projectId)
     .gte('date', startDate)
     .lte('date', endDate)
     .order('date', { ascending: true });
@@ -151,7 +161,7 @@ export async function getDocumentStats(
 }
 
 /**
- * 取得日期範圍內的所有統計（所有文件）
+ * 取得日期範圍內的所有統計（所有 projects）
  */
 export async function getStatsDateRange(startDate: string, endDate: string) {
   const supabase = await createClient();

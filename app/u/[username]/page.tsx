@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicProjectsByUserId } from "@/app/actions/projects";
 import { getStatsDateRangeByUserId } from "@/app/actions/writing-stats";
 import { transformToHeatmapData } from "@/lib/stats-transform";
 import ProfileHeatmap from "@/components/profile/ProfileHeatmap";
@@ -31,13 +32,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const isOwnProfile = currentUser?.id === profile.id;
 
-  // Fetch public documents for this user
-  const { data: publicDocuments } = await supabase
-    .from("documents")
-    .select("id, title, word_count, updated_at, published_at")
-    .eq("user_id", profile.id)
-    .eq("is_public", true)
-    .order("updated_at", { ascending: false });
+  // Fetch public projects for this user
+  const publicProjects = await getPublicProjectsByUserId(profile.id);
 
   // Fetch writing stats for heatmap (current year)
   const currentYear = new Date().getFullYear();
@@ -51,11 +47,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   );
   const heatmapData = transformToHeatmapData(stats);
 
-  // Calculate total words from public documents
-  const totalPublicWords = publicDocuments?.reduce(
-    (sum, doc) => sum + (doc.word_count || 0),
+  // Calculate total words from public projects
+  const totalPublicWords = publicProjects.reduce(
+    (sum, project) => sum + (project.word_count || 0),
     0
-  ) || 0;
+  );
 
   return (
     <main className="min-h-screen bg-background">
@@ -126,9 +122,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <div className="flex gap-6 mt-4">
               <div>
                 <span className="text-xl font-bold text-text tabular-nums">
-                  {publicDocuments?.length || 0}
+                  {publicProjects.length}
                 </span>
                 <span className="text-sm text-text/50 font-sans ml-1">公開作品</span>
+              </div>
+              <div>
+                <span className="text-xl font-bold text-text tabular-nums">
+                  {totalPublicWords.toLocaleString()}
+                </span>
+                <span className="text-sm text-text/50 font-sans ml-1">總字數</span>
               </div>
             </div>
 
@@ -142,30 +144,42 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         {/* Public Works */}
         <div>
           <h3 className="text-xl font-bold text-text mb-4">公開作品</h3>
-          {publicDocuments && publicDocuments.length > 0 ? (
+          {publicProjects.length > 0 ? (
             <div className="grid gap-3">
-              {publicDocuments.map((doc) => (
+              {publicProjects.map((project) => (
                 <Link
-                  key={doc.id}
-                  href={`/u/${username}/${doc.id}`}
+                  key={project.id}
+                  href={`/u/${username}/projects/${project.id}`}
                   className="bg-white rounded-lg border border-border p-5 hover:border-primary/30 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="text-lg font-semibold text-text">
-                      {doc.title}
-                    </h4>
-                    <span className="text-sm text-text/50 font-sans tabular-nums">
-                      {doc.word_count?.toLocaleString() || 0} 字
-                    </span>
+                    <div>
+                      <h4 className="text-lg font-semibold text-text">
+                        {project.title}
+                      </h4>
+                      {project.description && (
+                        <p className="text-sm text-text/60 mt-1 line-clamp-2">
+                          {project.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm text-text/50 font-sans tabular-nums">
+                        {(project.word_count || 0).toLocaleString()} 字
+                      </span>
+                      <div className="text-xs text-text/40 font-sans mt-0.5">
+                        {project.chapter_count || 0} 章
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-text/50 font-sans">
-                    {doc.published_at
-                      ? `發佈於 ${new Date(doc.published_at).toLocaleDateString("zh-TW", {
+                  <p className="text-sm text-text/50 font-sans mt-2">
+                    {project.published_at
+                      ? `發佈於 ${new Date(project.published_at).toLocaleDateString("zh-TW", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
                       })}`
-                      : `更新於 ${new Date(doc.updated_at).toLocaleDateString("zh-TW", {
+                      : `更新於 ${new Date(project.updated_at).toLocaleDateString("zh-TW", {
                         month: "long",
                         day: "numeric",
                       })}`}
@@ -182,10 +196,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               </p>
               {isOwnProfile && (
                 <Link
-                  href="/documents"
+                  href="/projects"
                   className="inline-block mt-4 px-6 py-2 text-sm text-primary hover:text-primary/80 transition-colors font-sans"
                 >
-                  前往我的文件
+                  前往我的作品
                 </Link>
               )}
             </div>

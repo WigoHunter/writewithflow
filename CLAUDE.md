@@ -18,14 +18,15 @@ Writers need a home for their work — a place to write, track progress, and sha
 - **Editor:** Tiptap (ProseMirror-based)
 - **Styling:** Tailwind CSS
 - **Charts:** Recharts (line charts), react-activity-calendar (heatmap)
+- **Drag & Drop:** @dnd-kit/core, @dnd-kit/sortable
 - **State:** Zustand
-- **Backend:** Next.js API routes
+- **Backend:** Next.js API routes, Server Actions
 - **Database:** Supabase (PostgreSQL + Auth + Realtime)
 - **AI (Phase 2):** Anthropic Claude API, Inngest for background jobs
 
 ## Core Features
 
-### Phase 1: GitHub for Writers (Current Focus)
+### Phase 1: GitHub for Writers (Current)
 
 #### 1. Landing Page ✅
 - Hero section with core value proposition
@@ -33,36 +34,32 @@ Writers need a home for their work — a place to write, track progress, and sha
 - Minimalist, calm design
 - Traditional Chinese for MVP
 
-#### 2. Writing Editor ✅
-- Rich text editing (bold, italic, headings)
-- Auto-save
-- Word count
+#### 2. Projects & Chapters ✅
+- Organize writing into projects with multiple chapters
+- Chapter ordering via drag-and-drop
+- Per-chapter content editing with auto-save
+- Word count per chapter and project total
 - Clean, distraction-free interface
 
 #### 3. Dashboard ✅
-- Document list with recently edited
+- Project list with recently edited
 - Writing stats: today's word count, current streak
 - Heatmap (GitHub contribution graph style)
 - Cumulative word count chart
 
-#### 4. Writer Profile (Next Up)
+#### 4. Writer Profile ✅
 - Public profile page at `/u/[username]`
 - Display name, bio, profile picture
 - Writing stats showcase (total words, streak, heatmap)
-- List of public works
+- List of public projects
 - Clean, minimal design
 
-#### 5. Public/Private Documents
-- Each document can be set as public or private
-- Public documents appear on writer's profile
-- Clean reading view for public documents
-- Share link for public works
-
-#### 6. Projects & Chapters (Future in Phase 1)
-- Organize documents into projects (books/series)
-- Chapter ordering within projects
-- Per-chapter visibility settings
-- Project-level metadata (genre, description, cover)
+#### 5. Public/Private Projects ✅
+- Two-level visibility: project and chapter
+- "Publish first N chapters" for serialized works
+- Public projects appear on writer's profile
+- Clean reading view for public works
+- Share link for public projects
 
 ### Phase 2: AI Editorial Tools (Future)
 
@@ -97,49 +94,48 @@ create table profiles (
   updated_at timestamptz default now()
 );
 
--- Documents (current structure, with visibility)
-create table documents (
+-- Projects (books/series)
+create table projects (
   id uuid primary key default gen_random_uuid(),
   title text not null,
-  content jsonb not null, -- ProseMirror doc format
-  user_id uuid references auth.users(id) on delete cascade,
-  is_public boolean default false,
-  published_at timestamptz, -- when first made public
+  description text,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  is_public boolean not null default false,
+  published_at timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Daily writing stats
-create table daily_writing_stats (
+-- Chapters within projects
+create table chapters (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade,
-  date date not null,
-  words_added int not null default 0,
-  words_deleted int not null default 0,
-  net_words int not null default 0,
+  project_id uuid references projects(id) on delete cascade not null,
+  title text not null,
+  content jsonb not null default '{}'::jsonb,
+  word_count int not null default 0,
+  "order" int not null,
+  is_public boolean not null default false,
+  published_at timestamptz,
   created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  unique(user_id, date)
+  updated_at timestamptz default now()
 );
 
--- Phase 1.5: Projects & Chapters (future migration)
--- create table projects (
---   id uuid primary key default gen_random_uuid(),
---   title text not null,
---   description text,
---   user_id uuid references auth.users(id) on delete cascade,
---   is_public boolean default false,
---   created_at timestamptz default now(),
---   updated_at timestamptz default now()
--- );
-
--- Phase 2: AI Editorial (future)
--- create table revisions (...);
--- create table suggestions (...);
+-- Daily writing stats (per project)
+create table daily_writing_stats (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  project_id uuid references projects(id) on delete cascade not null,
+  date date not null,
+  word_count int not null default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id, project_id, date)
+);
 
 -- Enable RLS
 alter table profiles enable row level security;
-alter table documents enable row level security;
+alter table projects enable row level security;
+alter table chapters enable row level security;
 alter table daily_writing_stats enable row level security;
 
 -- RLS policies
@@ -149,14 +145,22 @@ create policy "Profiles are viewable by everyone" on profiles
 create policy "Users can update own profile" on profiles
   for update using (auth.uid() = id);
 
-create policy "Users can CRUD own documents" on documents
+create policy "Users can CRUD own projects" on projects
   for all using (auth.uid() = user_id);
 
-create policy "Public documents are viewable by everyone" on documents
+create policy "Public projects are viewable by everyone" on projects
   for select using (is_public = true);
 
-create policy "Users can CRUD own daily_writing_stats" on daily_writing_stats
-  for all using (auth.uid() = user_id);
+create policy "Users can CRUD own chapters" on chapters
+  for all using (
+    project_id in (select id from projects where user_id = auth.uid())
+  );
+
+create policy "Public chapters are viewable by everyone" on chapters
+  for select using (
+    is_public = true
+    and project_id in (select id from projects where is_public = true)
+  );
 ```
 
 ## File Structure
@@ -164,77 +168,83 @@ create policy "Users can CRUD own daily_writing_stats" on daily_writing_stats
 ```
 storyhenge/
 ├── app/
-│   ├── (marketing)/
-│   │   └── page.tsx                # Landing page
+│   ├── page.tsx                      # Landing page
 │   ├── (auth)/
 │   │   ├── login/
 │   │   └── register/
-│   ├── (app)/
-│   │   ├── dashboard/
-│   │   │   └── page.tsx            # Dashboard
-│   │   ├── documents/
-│   │   │   ├── [id]/
-│   │   │   │   └── page.tsx        # Editor view
-│   │   │   └── page.tsx            # Document list
-│   │   ├── settings/
-│   │   │   └── profile/
-│   │   │       └── page.tsx        # Edit profile
-│   │   └── layout.tsx
+│   ├── dashboard/
+│   │   └── page.tsx                  # Dashboard
+│   ├── projects/
+│   │   ├── page.tsx                  # Project list
+│   │   └── [projectId]/
+│   │       ├── page.tsx              # Project editor
+│   │       ├── ProjectEditorClient.tsx
+│   │       └── preview/
+│   │           └── page.tsx          # Full book preview
 │   ├── u/
 │   │   └── [username]/
-│   │       ├── page.tsx            # Public writer profile
-│   │       └── [documentId]/
-│   │           └── page.tsx        # Public document reader
-│   ├── api/
-│   │   └── ...
+│   │       ├── page.tsx              # Public writer profile
+│   │       └── projects/
+│   │           └── [projectId]/
+│   │               └── page.tsx      # Public project reader
+│   ├── settings/
+│   │   └── profile/
+│   │       └── page.tsx              # Edit profile
+│   ├── actions/
+│   │   ├── projects.ts               # Project CRUD
+│   │   ├── chapters.ts               # Chapter CRUD
+│   │   ├── writing-stats.ts          # Stats tracking
+│   │   └── auth.ts
 │   └── layout.tsx
 ├── components/
-│   ├── landing/
-│   │   ├── Hero.tsx
-│   │   ├── Features.tsx
-│   │   └── CTA.tsx
-│   ├── dashboard/
-│   │   ├── RecentDocuments.tsx
-│   │   ├── WritingSummary.tsx
-│   │   └── QuickActions.tsx
+│   ├── project/
+│   │   ├── ProjectCard.tsx           # List item card
+│   │   ├── ProjectSidebar.tsx        # Chapter navigation
+│   │   ├── ChapterListItem.tsx       # Draggable chapter item
+│   │   ├── ChapterEditor.tsx         # Editor wrapper
+│   │   ├── ProjectPreview.tsx        # Full book preview
+│   │   ├── ProjectSettingsModal.tsx  # Settings modal
+│   │   └── PublicProjectReader.tsx   # Public reading view
 │   ├── editor/
-│   │   ├── Editor.tsx
-│   │   └── Toolbar.tsx
-│   ├── profile/
-│   │   ├── ProfileHeader.tsx       # Avatar, name, bio, stats
-│   │   ├── PublicWorksList.tsx     # List of public documents
-│   │   ├── WritingHeatmap.tsx      # Public heatmap
-│   │   └── EditProfileForm.tsx
-│   ├── reader/
-│   │   └── DocumentReader.tsx      # Clean reading view
-│   ├── stats/
+│   │   ├── FloatingToolbar.tsx
+│   │   └── ChapterSidebar.tsx
+│   ├── dashboard/
+│   │   ├── TodayStats.tsx
 │   │   ├── WritingHeatmap.tsx
-│   │   ├── WordCountChart.tsx
-│   │   └── MilestoneCard.tsx
+│   │   └── CumulativeChart.tsx
+│   ├── profile/
+│   │   └── ProfileHeatmap.tsx
 │   └── ui/
+│       └── Header.tsx
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts
 │   │   ├── server.ts
 │   │   └── middleware.ts
-│   └── word-count.ts
+│   ├── word-count.ts
+│   ├── stats-transform.ts
+│   ├── streak.ts
+│   └── hooks/
+│       └── useDebounce.ts
 ├── supabase/
 │   └── migrations/
+├── scripts/
+│   └── migrate-documents-to-projects.ts
 └── stores/
     └── editor.ts
 ```
 
 ## Current Milestones
 
-### Phase 1: GitHub for Writers
+### Phase 1: GitHub for Writers ✅
 
 1. ~~Landing page, auth, basic setup~~ ✅
 2. ~~Writing editor with auto-save~~ ✅
 3. ~~Dashboard, writing stats (heatmap + chart)~~ ✅
-4. **User profiles table + username setup** ← Next
-5. **Public profile page (`/u/[username]`)**
-6. **Document visibility (public/private toggle)**
-7. **Public document reader view**
+4. ~~User profiles + public profile page~~ ✅
+5. ~~Projects & Chapters structure~~ ✅
+6. ~~Chapter visibility (public/private)~~ ✅
+7. ~~Public project reader view~~ ✅
 8. Polish, deploy, beta users
 
 ### Phase 2: AI Editorial Tools (Future)
@@ -248,7 +258,6 @@ storyhenge/
 
 ## Out of Scope (Future)
 
-- Projects & chapters organization (Phase 1.5)
 - Comments/feedback from readers
 - Multi-author collaboration
 - Mobile app
@@ -265,6 +274,9 @@ npm run dev
 npx supabase start          # Local dev
 npx supabase db push        # Push migrations
 npx supabase gen types typescript --local > lib/supabase/types.ts
+
+# Data Migration (documents -> projects)
+npm run migrate:projects
 ```
 
 ## Environment Variables

@@ -1,6 +1,6 @@
 export type DailyStats = {
   date: string;
-  document_id: string;
+  project_id: string;
   word_count: number;
 };
 
