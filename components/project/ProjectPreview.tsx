@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Content } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { Chapter } from "@/app/actions/chapters";
 import type { Project } from "@/app/actions/projects";
@@ -60,7 +60,7 @@ export default function ProjectPreview({
         ]),
       };
 
-      editor.commands.setContent(combinedContent);
+      editor.commands.setContent(combinedContent as Content);
     }
   }, [editor, chapters]);
 

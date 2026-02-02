@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Content } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { Chapter } from "@/app/actions/chapters";
 import type { Project } from "@/app/actions/projects";
@@ -33,7 +33,7 @@ export default function PublicProjectReader({
         },
       }),
     ],
-    content: activeChapter?.content || { type: "doc", content: [] },
+    content: (activeChapter?.content || { type: "doc", content: [] }) as Content,
     editorProps: {
       attributes: {
         class: "prose prose-lg max-w-none",
@@ -44,7 +44,7 @@ export default function PublicProjectReader({
   // Update editor content when chapter changes
   useEffect(() => {
     if (editor && activeChapter?.content) {
-      editor.commands.setContent(activeChapter.content);
+      editor.commands.setContent(activeChapter.content as Content);
     }
   }, [editor, activeChapter?.id, activeChapter?.content]);
 

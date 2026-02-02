@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Content } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef, useState, useCallback } from "react";
 import FloatingToolbar from "@/components/editor/FloatingToolbar";
@@ -48,7 +48,7 @@ export default function ChapterEditor({
         },
       }),
     ],
-    content: chapter.content,
+    content: chapter.content as Content,
     editorProps: {
       attributes: {
         class: "prose prose-lg max-w-none focus:outline-none min-h-full",
@@ -77,7 +77,7 @@ export default function ChapterEditor({
       const newContent = JSON.stringify(chapter.content);
 
       if (chapterIdRef.current !== chapter.id || currentContent !== newContent) {
-        editor.commands.setContent(chapter.content);
+        editor.commands.setContent(chapter.content as Content);
         lastSavedContentRef.current = JSON.stringify(chapter.content);
         chapterIdRef.current = chapter.id;
       }

@@ -3,11 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+// ProseMirror JSON document format
+export interface ProseMirrorDoc {
+  type: "doc";
+  content?: Array<{
+    type: string;
+    attrs?: Record<string, unknown>;
+    content?: unknown[];
+    text?: string;
+    marks?: Array<{ type: string; attrs?: Record<string, unknown> }>;
+  }>;
+}
+
 export interface Chapter {
   id: string;
   project_id: string;
   title: string;
-  content: unknown;
+  content: ProseMirrorDoc;
   word_count: number;
   order: number;
   is_public: boolean;
@@ -212,7 +224,7 @@ export async function updateChapter(
   chapterId: string,
   updates: {
     title?: string;
-    content?: unknown;
+    content?: ProseMirrorDoc;
     word_count?: number;
     is_public?: boolean;
   }
@@ -238,7 +250,7 @@ export async function updateChapter(
     throw new Error("Chapter not found");
   }
 
-  if ((chapter.projects as { user_id: string }).user_id !== user.id) {
+  if ((chapter.projects as unknown as { user_id: string }).user_id !== user.id) {
     throw new Error("Not authorized");
   }
 
@@ -298,7 +310,7 @@ export async function deleteChapter(chapterId: string) {
     throw new Error("Chapter not found");
   }
 
-  if ((chapter.projects as { user_id: string }).user_id !== user.id) {
+  if ((chapter.projects as unknown as { user_id: string }).user_id !== user.id) {
     throw new Error("Not authorized");
   }
 
