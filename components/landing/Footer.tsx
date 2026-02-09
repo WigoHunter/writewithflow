@@ -3,13 +3,13 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="py-12 px-4 border-t border-border bg-white">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Brand */}
           <div className="text-center md:text-left">
             <h3 className="text-xl font-bold text-text">Storyhenge</h3>
             <p className="text-sm text-text/60 font-sans mt-1">
-              AI 驅動的寫作平台
+              GitHub for Writers
             </p>
           </div>
 

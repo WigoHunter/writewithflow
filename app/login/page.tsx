@@ -42,17 +42,6 @@ export default function LoginPage() {
           </p>
 
           <LoginForm />
-
-          {/* Register Link */}
-          <p className="mt-6 text-center text-sm text-text/60 font-sans">
-            還沒有帳號？
-            <Link
-              href="/register"
-              className="text-primary hover:text-primary/80 font-medium ml-1"
-            >
-              立即註冊
-            </Link>
-          </p>
         </div>
       </div>
     </main>
